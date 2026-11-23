@@ -31,7 +31,7 @@ Every page is the web interface's own (`/?_type=menuView&_tag=<page>`), and its 
 
 Everything but the device status is optional: when a page is missing (another model, or an account that cannot open it) the rest is still collected, and **Test connection** lists what could not be read.
 
-The device's key is its LAN-side MAC (the mesh controller's in `topo_lua`, else the lowest of its Wi-Fi and WAN MACs). It is a **router** when a WAN connection routes (PPPoE with NAT); an ONT in bridge mode, with a router behind it doing PPPoE, is not. A WAN connection that is not connected while another internet connection is (a leftover of the operator's configuration) is a gateway of unknown status, not an outage.
+The device's key is its LAN-side MAC (the mesh controller's in `topo_lua`, else the lowest of its Wi-Fi and WAN MACs). It is a **router** when a WAN connection routes (PPPoE with NAT); an ONT in bridge mode, with a router behind it doing PPPoE, is not. A WAN connection that is not connected while another internet connection is (a leftover of the operator's configuration) is not reported as a WAN nor a gateway: no WAN node on the map and no outage alert for it. With every internet connection down, they are all WANs and their gateways are down.
 
 ## What it changes
 

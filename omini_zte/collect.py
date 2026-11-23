@@ -335,7 +335,24 @@ def wans(data: Data) -> list[Row]:
     return [r for r in rows(data.wan, "ID_WAN_COMFIG") if r.get("Enable") == "1"]
 
 
+def connected(r: Row) -> bool:
+    return r.get("ConnStatus") == "Connected" or r.get("ConnStatus6") == "Connected"
+
+
+def uplinks(data: Data) -> list[Row]:
+    """The routed connections that are the ONT's way to the internet. One that
+    does not connect while another internet connection does is a leftover of
+    the operator's configuration (a profile of another service or an older
+    VLAN): not an uplink, so not a WAN on the map nor a gateway down."""
+    routed = [r for r in wans(data) if r.get("mode") == "route"]
+    internet = [r for r in routed if "INTERNET" in r.get("StrServList", "")]
+    if any(connected(r) for r in internet):
+        return [r for r in routed if connected(r)]
+    return routed
+
+
 def wan_interfaces(data: Data, has_pon: bool) -> list[Interface]:
+    up_ids = {id(r) for r in uplinks(data)}
     out = []
     for r in wans(data):
         name = r.get("WANCName") or r.get("_InstID", "WAN")
@@ -354,37 +371,27 @@ def wan_interfaces(data: Data, has_pon: bool) -> list[Interface]:
                 type="other",
                 mac=mac(r.get("WorkIFMac")),
                 ips=ips or None,
-                wan=r.get("mode") == "route",
+                wan=id(r) in up_ids,
                 parent="PON" if has_pon else None,
                 vlan=vlan if vlan and 1 <= vlan <= 4094 else None,
-                up=r.get("ConnStatus") == "Connected" or r.get("ConnStatus6") == "Connected",
+                up=connected(r),
             )
         )
     return out
 
 
 def gateways(data: Data) -> list[Gateway]:
-    internet = [
-        r for r in wans(data) if r.get("mode") == "route" and "INTERNET" in r.get("StrServList", "")
-    ]
-    connected = [r for r in internet if r.get("ConnStatus") == "Connected"]
     out = []
-    for r in internet:
+    for r in uplinks(data):
+        if "INTERNET" not in r.get("StrServList", ""):
+            continue
         name = r.get("WANCName") or r.get("_InstID", "WAN")
-        if r.get("ConnStatus") == "Connected":
-            status = "up"
-        elif connected:
-            # Another internet connection carries the traffic: this one is a
-            # leftover of the operator's configuration, not an outage.
-            status = "unknown"
-        else:
-            status = "down"
         out.append(
             Gateway(
                 name=name,
                 interface=name,
                 address=ip(r.get("GateWay")) or ip(r.get("Gateway6")),
-                status=status,
+                status="up" if connected(r) else "down",
             )
         )
     return out

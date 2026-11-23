@@ -62,17 +62,20 @@ def test_wan_connections_and_gateways(zte, cfg):
     assert wan.wan and wan.up and wan.parent == "PON" and wan.vlan == 2000
     assert wan.ips == ["100.64.0.10/32", "2001:db8:1:1:66db:38ff:fe00:47/64"]
     assert wan.mac == "64:db:38:00:00:47"
-    gws = {g.name: g for g in d.gateways}
-    assert gws["omci_ipv4_pppoe_1"].status == "up"
-    assert gws["omci_ipv4_pppoe_1"].address == "100.64.0.1"
-    # The operator's leftover connection while the other carries the internet.
-    assert gws["BRD"].status == "unknown"
+    (gw,) = d.gateways
+    assert (gw.name, gw.status, gw.address) == ("omci_ipv4_pppoe_1", "up", "100.64.0.1")
+    # The operator's leftover connection, while the other carries the internet:
+    # not a WAN (no WAN node on the map, no gateway down).
+    brd = by_name(d)["BRD"]
+    assert (brd.wan, brd.up) == (False, False)
 
 
 def test_every_internet_connection_down_is_down(zte, cfg):
     for r in zte.rows("ethWanStatus", "wan_internetstatus_lua", "ID_WAN_COMFIG"):
-        r["ConnStatus"] = "Connecting"
-    assert {g.status for g in device(cfg).gateways} == {"down"}
+        r.update(ConnStatus="Connecting", ConnStatus6="Disconnected")
+    d = device(cfg)
+    assert {g.name: g.status for g in d.gateways} == {"BRD": "down", "omci_ipv4_pppoe_1": "down"}
+    assert by_name(d)["BRD"].wan is True
 
 
 def test_an_ont_in_bridge_mode_is_not_the_router(zte, cfg):
