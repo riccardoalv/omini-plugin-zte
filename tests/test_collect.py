@@ -49,6 +49,8 @@ def test_pon_optics(zte, cfg):
     t = pon.transceiver
     assert (t.type, t.rx_power_dbm, t.tx_power_dbm) == ("GPON", -20.0436, 2.32)
     assert (t.temperature_c, t.voltage_v, t.bias_ma) == (41.347, 3.268, 11.65)
+    # GPON's receiver sensitivity (class B+), not an Ethernet SFP's limit.
+    assert t.rx_power_low_dbm == -27
 
 
 def test_pon_without_light_is_down(zte, cfg):

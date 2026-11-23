@@ -11,7 +11,7 @@ Every page is the web interface's own (`/?_type=menuView&_tag=<page>`), and its 
 | Data | Page → data | Used for |
 |---|---|---|
 | Model, serial, firmware, CPU (per core), memory, uptime | `statusMgr` → `devmgr_statusmgr_lua` (**required**) | The device on the map, health |
-| **PON optics**: receive and transmit power (dBm), module temperature, voltage, bias current; loss of signal and registration state (O5) | `ponopticalinfo` → `optical_info_lua` | The `PON` port, with its transceiver; down without light or registration |
+| **PON optics**: receive and transmit power (dBm), module temperature, voltage, bias current; loss of signal and registration state (O5). The ONT reports no alarm threshold, so the low receive limit is GPON's class B+ sensitivity, −27 dBm (ITU-T G.984.2): Omini's weak-signal alert fires below it, not at a normal −20 dBm | `ponopticalinfo` → `optical_info_lua` | The `PON` port, with its transceiver; down without light or registration |
 | WAN connections: PPPoE/IP, mode (route or bridge), IPv4 and IPv6 addresses, gateway, VLAN, MAC, connected or not | `ethWanStatus` → `wan_internetstatus_lua` | WAN interfaces on the PON port, gateways |
 | LAN ports: link, speed, duplex, byte and error counters | `localNetStatus` → `status_lan_info_lua` | Ports `LAN1`…`LAN4` |
 | Connected devices (port, IPv6 address) | `localNetStatus` → `accessdev_landevs_lua` | MAC table, IPv6 neighbors |

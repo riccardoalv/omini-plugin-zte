@@ -44,6 +44,10 @@ PAUSE_PREFIX = "Omini pause"
 SPEEDS = {"1": 10, "2": 100, "3": 1000, "4": 2500, "5": 5000, "6": 10000}
 DUPLEX = {"1": "half", "2": "full"}
 BANDS = {"2.4GHz": "2.4ghz", "5GHz": "5ghz", "6GHz": "6ghz"}
+# The ONT does not report its optical alarm thresholds: a GPON ONT receiver
+# (ITU-T G.984.2, class B+) works down to -27 dBm, so a weak signal is below
+# that, not below an Ethernet SFP's limit (-20 dBm is a normal GPON level).
+GPON_RX_LOW_DBM = -27.0
 
 
 def client(cfg: Any) -> Client:
@@ -325,6 +329,7 @@ def pon(data: Data) -> Interface | None:
             # Millivolts.
             voltage_v=round(volt / 1000, 3) if volt is not None else None,
             bias_ma=num(o.get("Current")),
+            rx_power_low_dbm=GPON_RX_LOW_DBM,
         )
         if o
         else None,
